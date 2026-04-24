@@ -1,49 +1,97 @@
-# KIE System (Key Information Extraction)
+# Document Structure Analysis & OCR Engine
 
-AI 기반 이미지 정보 추출(OCR) 및 구조화(KIE)를 위한 통합 시스템입니다. 이 프로젝트는 이미지 내의 텍스트를 인식하고, 비정형 데이터를 의미 있는 구조로 변환하는 기능을 제공합니다.
+![Java](https://img.shields.io/badge/Java-17%2B-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.135%2B-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![ONNX](https://img.shields.io/badge/ONNX-Inference-005CED?style=for-the-badge&logo=onnx&logoColor=white)
 
-## 시스템 구성 및 역할
+An integrated system for AI-powered document information extraction (OCR) and structured data parsing (Key Information Extraction). This service transforms unstructured images into structured JSON by combining high-performance text recognition with semantic entity analysis.
 
-전체 시스템은 클라이언트 인터페이스와 분석 핵심 엔진으로 구성되어 있습니다.
+## Key Features
 
-### 1. KIE Client (apps/kie-client)
-- 역할: 사용자 및 외부 시스템과의 접점 역할을 수행하는 서비스 레이어입니다.
-- 기술: Java 21, Spring Boot 3.x
-- 주요 기능:
-    - 이미지 업로드 요청 수락 및 유효성 검증
-    - 분석 엔진(KIE Module)과의 통신 및 결과 중계
-    - 통합 에러 핸들링 및 표준 API 응답 규격 제공
+* **High-Performance OCR & KIE Pipeline**
+    * **PaddleOCR Integration**: Robust text detection and recognition across various document formats and orientations.
+    * **LayoutXLM (SER)**: Utilizes Semantic Entity Recognition to extract meaningful fields (e.g., dates, amounts, names) based on both textual content and spatial coordinates.
+    * **ONNX Runtime**: Optimized AI inference engine ensuring low-latency processing and high throughput on CPU environments.
+* **Intelligent Document Reconstruction**
+    * **Spatial Sorting**: Automatically aligns detected text blocks using a heuristic coordinate-based algorithm (top-to-bottom, left-to-right) for accurate context mapping.
+    * **BIO-Tag Parsing**: Sophisticated field reconstruction logic using Begin-Inside-Outside tagging to merge sub-word tokens and adjacent text regions into coherent entities.
+* **Scalable Microservice Architecture**
+    * **KIE Client (Java/Spring Boot)**: Production-ready gateway service handling request validation, multi-part file processing, and unified API response standard.
+    * **KIE Module (Python/FastAPI)**: Specialized inference engine focused on AI model orchestration, image preprocessing (OpenCV), and heavy computational tasks.
+* **Modern Engineering Standards**
+    * **Type-Safe Data Contracts**: Immutable Java records and Python Pydantic models ensure strict schema validation across the entire pipeline.
+    * **Advanced Dependency Management**: Leveraging `uv` for lightning-fast Python environment synchronization and `Gradle` for reliable Java builds.
 
-### 2. KIE Module (apps/kie-module)
-- 역할: AI 모델이 구동되어 실제 데이터를 분석하는 핵심 엔진입니다.
-- 기술: Python 3.13, FastAPI, PaddleOCR, LayoutXLM
-- 주요 기능:
-    - PaddleOCR을 활용한 고성능 텍스트 영역 검출 및 인식
-    - LayoutXLM(SER) 모델을 통한 엔티티 간 관계 분석 및 데이터 구조화
-    - 이미지 전처리 및 분석 결과의 JSON 변환
+## API Overview
 
----
+### 1. Document Extraction (KIE Client)
+The primary entry point for external systems to upload documents and receive structured data.
+* **Endpoint:** `POST /api/v1/kie/extract`
+* **Consumes:** `multipart/form-data` (Supports JPG, PNG)
+* **Produces:** `application/json`
 
-## 실행 가이드
+### 2. Inference Engine (KIE Module)
+The internal API used for raw AI analysis, providing detailed extraction results.
+* **Endpoint:** `POST /api/v1/kie/extract`
+* **Consumes:** `multipart/form-data`
+* **Produces:** `application/json`
 
-### KIE Module 실행 (Python)
-```powershell
-cd apps/kie-module
-uv sync
-uv run python -m uvicorn app.main:app --reload --port 8000
-```
+## Project Structure
 
-### KIE Client 실행 (Java)
-```powershell
+The repository follows a clean separation of concerns between the orchestration layer and the inference engine:
+
+    /
+    ├── apps/
+    │   ├── kie-client/   # Spring Boot Gateway (Java 17)
+    │   └── kie-module/   # AI Inference Engine (Python 3.13)
+    ├── libs/             # Shared assets and common libraries
+    └── models/           # Pre-trained ONNX models and label definitions
+
+## Getting Started
+
+### Prerequisites
+* **Java 17** or higher
+* **Python 3.13** or higher
+* **uv** (Python package manager)
+* **Gradle** (Java build tool)
+
+### Installation & Execution
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/kie-system.git
+   cd kie-system
+   ```
+
+2. **Run the KIE Module (Inference Engine):**
+   ```bash
+   cd apps/kie-module
+   uv sync
+   uv run python -m uvicorn app.main:app --reload --port 8000
+   ```
+
+3. **Run the KIE Client (Gateway):**
+   ```bash
+   cd apps/kie-client
+   ./gradlew bootRun
+   ```
+
+## Testing
+
+The project includes unit and integration tests covering the core AI algorithms and API orchestration layers.
+
+```bash
+# Run Java Client Tests
 cd apps/kie-client
-./gradlew bootRun
+./gradlew test
+
+# Run Python Module Tests
+cd apps/kie-module
+# uv run pytest (if tests are configured)
 ```
 
----
+## License
 
-## 프로젝트 구조
-
-- apps/kie-client: Spring Boot 기반 클라이언트 애플리케이션
-- apps/kie-module: FastAPI 기반 AI 분석 엔진
-- libs: 공용 자산 및 라이브러리 저장소
-- models: 분석에 필요한 사전 학습된 AI 모델 파일 (ONNX)
+This project is licensed under the MIT License.
